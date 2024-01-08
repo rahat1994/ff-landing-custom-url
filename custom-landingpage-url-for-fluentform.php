@@ -39,6 +39,7 @@ class FluentFormLandingPageCustomURL
 
     public function boot()
     {
+
         // check if fluentform is istalled.
         if (!defined('FLUENTFORM')) {
             return $this->showFulentFormIntallationNotice();
@@ -79,7 +80,7 @@ class FluentFormLandingPageCustomURL
             }
 
             $message = sprintf(
-                "FluentForm Dropbox Add-On Requires Fluent Forms Add On Plugin, <b><a href=\"%s\">%s</a></b>",
+                "FluentForm Landing page Custom url Requires Fluent Forms Add On Plugin, <b><a href=\"%s\">%s</a></b>",
                 $pluginInfo->url,
                 $install_url_text
             );
@@ -105,6 +106,10 @@ class FluentFormLandingPageCustomURL
         ];
         $allPlugins = get_plugins();
 
+        // echo '<pre>';
+        // print_r($allPlugins);
+        // exit;
+
         if (isset($allPlugins['fluentform/fluentform.php'])) {
             $url = wp_nonce_url(
                 self_admin_url('plugins.php?action=activate&plugin=fluentform/fluentform.php'),
@@ -127,5 +132,6 @@ class FluentFormLandingPageCustomURL
     }
 }
 
-
-(new FluentFormLandingPageCustomURL())->boot();
+add_action('plugins_loaded', function () {
+    (new FluentFormLandingPageCustomURL())->boot();
+});

@@ -16,9 +16,9 @@ class FluentFormCustomURL extends IntegrationManagerController
         parent::__construct(
             $application,
             'Landing Page Custom Url',                        // title
-            'landing-page-custom-url',                               // integration key
-            '_fluentform_landing_page_custom_url',                         // option key
-            'landing_page_custom_url_feed',                            // settings key
+            'landing-page-custom-url',                        // integration key
+            '_fluentform_landing_page_custom_url',            // option key
+            'landing_page_custom_url_feed',                   // settings key
             11                                                // priority 
         );
 
@@ -39,10 +39,10 @@ class FluentFormCustomURL extends IntegrationManagerController
                 'invalid_message'  => __('Your API Key is not valid', 'fluentform'),       // Invalid API Message
                 'save_button_text' => __('Save Settings', 'fluentform'),                   // Settings Save Button tTxt
                 'fields'           => [
-                    'apiKey' => [
+                    'url_prefix' => [
                         'type'       => 'text',                                            // API key type
-                        'label_tips' => __("Enter your Integration API Key", 'fluentform'), // Additional help text
-                        'label'      => __('Integration API Key', 'fluentform'),           // Input Label
+                        'label_tips' => __("Enter your URL prefix", 'fluentform'), // Additional help text
+                        'label'      => __('URL prefix', 'fluentform'),           // Input Label
                     ]
                 ],
                 'hide_on_valid'    => true,                                                // Settings Input will be hidden on valid 
@@ -50,21 +50,94 @@ class FluentFormCustomURL extends IntegrationManagerController
                     'section_description' => 'Your AwesomeIntegration is Activated',       // Discard Settings Page Description
                     'button_text'         => 'Disconnect AwesomeIntegration',              // Discard Button Text
                     'data'                => [
-                        'apiKey' => ''                                                     // Set API key to empty on discard
+                        'url_prefix' => ''                                                     // Set API key to empty on discard
                     ],
                     'show_verify'         => true                                          // Show verification Option
                 ]
             ];
     }
 
+    public function getGlobalSettings($settings = [])
+    {
+        $globalSettings = get_option($this->optionKey);
+        if (!$globalSettings) {
+            $globalSettings = [];
+        }
+        $defaults = [
+            'url_prefix' => '',
+            'status' => ''
+        ];
+
+        return wp_parse_args($globalSettings, $defaults);
+    }
+
+    public function saveGlobalSettings($settings)
+    {
+
+        if (empty($settings['url_prefix'])) {
+
+            $integrationSettings = [
+                'accessCode' => '',
+                'status' => false
+            ];
+            update_option($this->optionKey, $integrationSettings, 'no');
+            wp_send_json_success([
+                'message' => __('Your URL prefix has been updated.', 'ffdropbox'),
+                'data' => [
+                    'settings' => $settings
+                ],
+                'status' => false
+            ], 200);
+        }
+
+
+        try {
+            $oldSettings = $this->getGlobalSettings($settings);
+
+            if (empty($settings['url_prefix'])) {
+                throw new \Exception('Please Enter the URL Prefix you want to use.');
+            }
+
+            if (ArrayHelper::get($oldSettings, 'url_prefix') && ArrayHelper::isTrue($oldSettings, 'status')) {
+                wp_send_json_success([
+                    'message' => __('Your connection is up and running', 'ffdropbox'),
+                    'status' => true
+                ], 200);
+            }
+            $url_prefix = sanitize_textarea_field($settings['url_prefix']);
+
+
+            $result['url_prefix'] = $url_prefix;
+            $result['status'] = true;
+
+            update_option($this->optionKey, $result, 'no');
+        } catch (\Exception $exception) {
+            wp_send_json_error([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+
+        wp_send_json_success([
+            'message' => __('Your landing page URL prefix has been set.', 'ffdropbox'),
+            'status' => true
+        ], 200);
+    }
+
     public function pushIntegration($integrations, $formId)
     {
+        // if (!$this->isConfigured()) {
+        //     return $integrations;
+        // }
         $integrations[$this->integrationKey] = [
             'category'                => 'wp_core',
-            'disable_global_settings' => 'yes',
+            // 'disable_global_settings' => 'yes',
             'logo'                    => $this->logo,
             'title'                   => $this->title . ' Integration',
-            'is_active'               => $this->isConfigured()
+            'is_active'               => $this->isConfigured(),
+            'configure_title'       => 'Configuration required!',
+            'global_configure_url' => admin_url('admin.php?page=fluent_forms_settings#general-' . $this->integrationKey . '-settings'),
+            'configure_message' => $this->title . ' is not configured yet! Please configure your ' . $this->title . ' first',
+            'configure_button_text' => 'Configure ' . $this->title
         ];
 
         return $integrations;
@@ -94,52 +167,11 @@ class FluentFormCustomURL extends IntegrationManagerController
             [
                 'fields' => [
                     [
-                        'key'           => 'name',
-                        'label'         => 'Name',
+                        'key'           => 'slug',
+                        'label'         => 'Slug',
                         'required'      => true,
-                        'placeholder'   => 'Your Feed Name',
+                        'placeholder'   => 'my-amazing-form',
                         'component'     => 'text'
-                    ],
-
-                    [
-                        'key'            => 'additional_fields',
-                        'label'          => 'Integration Fields',
-                        'sub_title'      => 'Please specify the data ',
-                        'required'       => true,
-                        'component'      => 'map_fields',
-                        'primary_fileds' => [
-                            [
-                                'key'           => 'fieldEmailAddress',
-                                'label'         => 'Email Address',
-                                'required'      => true,
-                                'input_options' => 'emails'
-                            ]
-                        ],
-                        'default_fields' => [
-                            [
-                                'name'     => 'first_name',
-                                'label'    => esc_html__('First Name', 'fluentformpro'),
-                                'required' => false
-                            ],
-                            [
-                                'name'     => 'last_name',
-                                'label'    => esc_html__('Last Name', 'fluentformpro'),
-                                'required' => false
-                            ],
-
-                        ]
-                    ],
-                    [
-                        'key'        => 'conditionals',
-                        'label'      => 'Conditional Logics',
-                        'tips'       => 'Push data to your Integration conditionally based on your submission values',
-                        'component'  => 'conditional_block'
-                    ],
-                    [
-                        'key'            => 'enabled',
-                        'label'          => 'Status',
-                        'component'      => 'checkbox-single',
-                        'checkbox_label' => 'Enable This feed'
                     ]
                 ],
                 'integration_title' => $this->title
