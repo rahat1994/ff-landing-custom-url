@@ -24,8 +24,13 @@ class FluentFormCustomURL extends IntegrationManagerController
 
         $this->description = '';                              // Integration details
 
-        $this->logo = '/my-integration-image-file-path.png';  // Integration Logo
+        $this->logo = FF_LANDING_CUSTOM_URL_URL . 'landing-custom-url-integration-logo.png';  // Integration Logo
+        $this->registerHooks();
         $this->registerAdminHooks();
+    }
+
+    public function registerHooks()
+    {
     }
 
     public function getGlobalFields($fields)
