@@ -55,11 +55,15 @@ class FluentFormLandingPageCustomURL
     protected function includeFiles()
     {
         include_once FF_LANDING_CUSTOM_URL_DIR . 'Integration/FluentFormCustomURL.php';
+        include_once FF_LANDING_CUSTOM_URL_DIR . 'Integration/URLRewrite.php';
     }
 
     protected function registerHooks($fluentForm)
     {
-        new \FluentFormLandingCustomURL\Integration\FluentFormCustomURL($fluentForm);
+        $fluentForm = new \FluentFormLandingCustomURL\Integration\FluentFormCustomURL($fluentForm);
+        $globalSettings = $fluentForm->getGlobalSettings();
+
+        new \FluentFormLandingCustomURL\Integration\URLRewrite($globalSettings['url_prefix']);
     }
 
 

@@ -82,7 +82,7 @@ class FluentFormCustomURL extends IntegrationManagerController
         if (empty($settings['url_prefix'])) {
 
             $integrationSettings = [
-                'accessCode' => '',
+                'url_prefix' => '',
                 'status' => false
             ];
             update_option($this->optionKey, $integrationSettings, 'no');
@@ -183,7 +183,6 @@ class FluentFormCustomURL extends IntegrationManagerController
             ];
     }
 
-    // This is an absttract method, so it's required.
     public function getMergeFields($list, $listId, $formId)
     {
         if (!$this->isConfigured()) {
