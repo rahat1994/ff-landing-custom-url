@@ -86,6 +86,8 @@ class FluentFormCustomURL extends IntegrationManagerController
                 'status' => false
             ];
             update_option($this->optionKey, $integrationSettings, 'no');
+
+
             wp_send_json_success([
                 'message' => __('Your URL prefix has been updated.', 'ffdropbox'),
                 'data' => [
@@ -116,6 +118,7 @@ class FluentFormCustomURL extends IntegrationManagerController
             $result['status'] = true;
 
             update_option($this->optionKey, $result, 'no');
+            flush_rewrite_rules();
         } catch (\Exception $exception) {
             wp_send_json_error([
                 'message' => $exception->getMessage()
